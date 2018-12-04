@@ -70,23 +70,6 @@ Record ParseRecord(const string& s) {
     return {minute, guard_id, type};
 }
 
-int CalSleep(vector<Record>::iterator* it_ptr, const vector<Record>::iterator& end) {
-    auto& it = *it_ptr;
-
-    int fall_minute = 0;
-    int sleep = 0;
-    do {
-        if (it->type == kFall) {
-            fall_minute = it->minute;
-        } else if (it->type == kWake) {
-            sleep += it->minute - fall_minute;
-        }
-        ++it;
-    } while (it != end && it->type != kBeginShift);
-
-    return sleep;
-}
-
 void FillSleepVector(vector<Record>::iterator* it_ptr, vector<int>* sleeps_ptr, const vector<Record>::iterator& end) {
     auto& it = *it_ptr;
     auto& sleeps = *sleeps_ptr;
@@ -117,33 +100,29 @@ int main() {
     for (int i = 0; i < raws.size(); ++i)
         records[i] = ParseRecord(raws[i]);
 
+    unordered_map<int, vector<int>> guards_sleep;
     auto it = records.begin();
-    unordered_map<int, int> guards_sleep;
     while (it != records.end()) {
-        int cur_guard = it->guard_id;
-        guards_sleep[cur_guard] += CalSleep(&it, records.end());
+        int guard_id = it->guard_id;
+        if (!guards_sleep.count(guard_id))
+            guards_sleep.emplace(guard_id, vector<int>(60));
+        FillSleepVector(&it, &guards_sleep[guard_id], records.end());
     }
 
-    auto guard_it = max_element(guards_sleep.begin(), guards_sleep.end(),
-                                [](const pair<int, int>& p1, const pair<int, int>& p2) {
-                                    return p1.second < p2.second;
-                                });
-    int sleepy_guard = guard_it->first;
-    cout << "Sleepy guard: " << sleepy_guard << " minutes: " << guard_it->second << endl;
-
-    vector<int> sleeps(60);
-    it = records.begin();
-    while (it != records.end()) {
-        if (it->guard_id == sleepy_guard) {
-            FillSleepVector(&it, &sleeps, records.end());
-        } else {
-            CalSleep(&it, records.end());
+    int sleepy_guard = 0;
+    int sleepy_minute = 0;
+    int most_value = 0;
+    for (auto& p : guards_sleep) {
+        auto& sleep = p.second;
+        auto minute_it = max_element(sleep.begin(), sleep.end());
+        if (*minute_it > most_value) {
+            most_value = *minute_it;
+            sleepy_guard = p.first;
+            sleepy_minute = minute_it - sleep.begin();
         }
     }
-
-    auto minute_it = max_element(sleeps.begin(), sleeps.end());
-    int sleepy_minute = minute_it - sleeps.begin();
-    cout << sleepy_minute << ": " << *minute_it << endl;
+    cout << sleepy_guard << endl;
+    cout << sleepy_minute << ": " << most_value << endl;
 
     cout << "Answer: " << sleepy_guard * sleepy_minute << endl;
 }
