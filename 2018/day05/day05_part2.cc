@@ -26,7 +26,7 @@ bool Reacted(char c1, char c2) {
     return abs(c1 - c2) == ('a' - 'A');
 }
 
-int ReactedLength(string s) {
+int ReactedLength(const string& s) {
     vector<int> stack;
     for (auto& c : s) {
         if (!stack.empty() && Reacted(stack.back(), c))
