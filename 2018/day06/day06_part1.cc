@@ -37,7 +37,6 @@ int main() {
         char tmp;
         iss >> x >> tmp >> y;
         dots.emplace_back(x, y);
-        cout << "(" << x << ", " << y << ")" << endl;
     }
 
     auto it_max_x = max_element(dots.begin(), dots.end(),
@@ -54,34 +53,25 @@ int main() {
     const int plain_size = max(it_max_x->first, it_max_y->second) + 10;
     cout << "plain_size: " << plain_size << endl;
 
-    vector<vector<int>> plain(plain_size, vector<int>(plain_size, -1));
     unordered_map<int, int> areas;
     for (int i = 0; i < plain_size; ++i) {
         for (int j = 0; j < plain_size; ++j) {
-            plain[i][j] = ClosestDot({i, j}, dots);
-            ++areas[plain[i][j]];
-            cout << plain[i][j] << " ";
+            int dot_idx = ClosestDot({i, j}, dots);
+            ++areas[dot_idx];
         }
-        cout << endl;
     }
 
     for (int i = 0; i < plain_size; ++i) {
-        areas.erase(plain[i][0]);
-        areas.erase(plain[i][plain_size-1]);
-        areas.erase(plain[0][i]);
-        areas.erase(plain[plain_size-1][i]);
+        areas.erase(ClosestDot({i, 0}, dots));
+        areas.erase(ClosestDot({i, plain_size-1}, dots));
+        areas.erase(ClosestDot({0, i}, dots));
+        areas.erase(ClosestDot({plain_size-1, i}, dots));
     }
 
-    int max_dot = -1;
-    int max_v = numeric_limits<int>::min();
-    for (auto& p : areas) {
-        cout << p.first << " " << p.second << endl;
-        if (p.second > max_v) {
-            max_dot = p.first;
-            max_v = p.second;
-        }
-    }
-
+    auto it_max_dot = max_element(areas.begin(), areas.end(),
+                                  [](const pair<int, int>& p1, const pair<int, int>& p2) {
+                                      return p1.second < p2.second;
+                                  });
     cout << "Area count: " << areas.size() << endl;
-    cout << max_dot << " " << max_v << endl;
+    cout << it_max_dot->first << " " << it_max_dot->second << endl;
 }

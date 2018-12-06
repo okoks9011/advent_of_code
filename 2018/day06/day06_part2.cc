@@ -32,7 +32,6 @@ int main() {
         char tmp;
         iss >> x >> tmp >> y;
         dots.emplace_back(x, y);
-        cout << "(" << x << ", " << y << ")" << endl;
     }
 
     auto it_max_x = max_element(dots.begin(), dots.end(),
