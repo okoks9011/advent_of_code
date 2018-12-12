@@ -3,3 +3,4 @@ project(day11)
 
 set(CMAKE_CXX_STANDARD 11)
 add_executable(day11_part1 day11_part1.cc)
+add_executable(day11_part2 day11_part2.cc)
