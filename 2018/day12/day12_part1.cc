@@ -117,5 +117,7 @@ int main() {
     }
 
     cout << endl;
+    cout << gen << ", " << start_idx << ", " << CalSum(plants, start_idx) << ": ";
+    PrintPlants(plants);
     cout << "Answer: " << CalSum(plants, start_idx) << endl;
 }
