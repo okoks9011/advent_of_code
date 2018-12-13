@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <unordered_set>
 #include <set>
 #include <unordered_map>
 #include <deque>
@@ -23,6 +24,7 @@ struct Cart {
     int d_cnt = 0;
 
     Cart() = default;
+    Cart(int i) : id(i) {}
     Cart(int i, int px, int py, Direction direc) : id(i), y(py), x(px), d(direc) {}
 
     bool operator<(const Cart& other) const {
@@ -195,44 +197,50 @@ Cart MoveCart(const Cart cart, char rail) {
         new_cart.d_cnt = (new_cart.d_cnt + 1) % 3;
     }
 
-    if (new_cart.d == kUp) {
+    if (new_cart.d == kUp)
         new_cart.y -= 1;
-    } else if (new_cart.d == kRight) {
+    else if (new_cart.d == kRight)
         new_cart.x += 1;
-    } else if (new_cart.d == kDown) {
+    else if (new_cart.d == kDown)
         new_cart.y += 1;
-    } else if (new_cart.d == kLeft) {
+    else if (new_cart.d == kLeft)
         new_cart.x -= 1;
-    }
 
     return new_cart;
 }
 
-bool IsCollide(const Cart& cart, const set<Cart>& carts) {
+Cart CollideCart(const Cart& cart, const set<Cart>& carts) {
     for (auto& cart_i : carts) {
         if (cart.x == cart_i.x && cart.y == cart_i.y)
-            return true;
+            return cart_i;
     }
-    return false;
+    return Cart(-1);
 }
 
-bool PlayTick(vector<string>* map_ptr, set<Cart>* carts_ptr) {
+int PlayTickRemain(vector<string>* map_ptr, set<Cart>* carts_ptr) {
     auto& map = *map_ptr;
     auto& carts = *carts_ptr;
 
     set<Cart> iter_carts(carts);
+    set<Cart> crashed;
     for (auto& cart : iter_carts) {
+        if (crashed.count(cart))
+            continue;
         carts.erase(cart);
         auto new_cart = MoveCart(cart, map[cart.y][cart.x]);
 
-        if (IsCollide(new_cart, carts)) {
-            cout << "Collide occur! => (" << new_cart.x << "," << new_cart.y << ")" << endl;
-            return false;
+        auto collide_cart = CollideCart(new_cart, carts);
+        if (collide_cart.id != -1) {
+            cout << "Collide occur! => (" << new_cart.x << "," << new_cart.y << ")";
+            cout << " : " << new_cart.id << " and " << collide_cart.id << endl;
+            crashed.emplace(collide_cart);
+            carts.erase(collide_cart);
+        } else {
+            carts.emplace(new_cart);
         }
-        carts.emplace(new_cart);
     }
 
-    return true;
+    return carts.size();
 }
 
 int main() {
@@ -251,7 +259,12 @@ int main() {
     PrintMap(map, carts, false);
     PrintMap(map, carts, true);
 
-    while (PlayTick(&map, &carts)) {
-        PrintMap(map, carts, true);
-    }
+    int remain = carts.size();
+    do {
+        remain = PlayTickRemain(&map, &carts);
+        // PrintMap(map, carts, true);
+    } while (remain > 1);
+
+    auto last = *carts.begin();
+    cout << "Anser: " << last.x << "," << last.y << endl;
 }
